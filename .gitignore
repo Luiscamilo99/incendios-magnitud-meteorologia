@@ -1,0 +1,8 @@
+# Credenciales y configuración local
+.env
+.env.*
+.cdsapirc
+
+# Datos generados localmente
+*.nc
+*.gpkg
