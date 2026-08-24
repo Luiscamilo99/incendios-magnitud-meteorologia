@@ -1,0 +1,9 @@
+pandas>=2.2
+geopandas>=0.14
+shapely>=2.0
+requests>=2.31
+streamlit>=1.37
+folium>=0.16
+streamlit-folium>=0.20
+plotly>=5.22
+python-dotenv>=1.0

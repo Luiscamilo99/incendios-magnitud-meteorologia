@@ -6,3 +6,9 @@
 # Datos generados localmente
 *.nc
 *.gpkg
+
+.streamlit/secrets.toml
+data/raw/
+__pycache__/
+*.pyc
+.venv/
