@@ -30,6 +30,7 @@ def generar_skewt_diagram(
     subtitulo: str = "",
 ) -> plt.Figure:
     """
+<<<<<<< HEAD
     Genera un diagrama termodinámico Skew-T log-P con estética moderna estilo Windy Sounding:
     - Fondo oscuro / Slate de alto contraste (#0F172A / #1E293B).
     - Eje Y logarítmico invertido de presión (1050 hPa a 200 hPa).
@@ -40,16 +41,29 @@ def generar_skewt_diagram(
     - Detección visual de capas de Inversión Térmica con bandas ámbar (#FBBF24).
     - Barbillas de viento y etiquetas de velocidad/dirección (kt / km/h) en el margen derecho.
     - Cuadro diagnóstico de incendio (Índice de Haines, Estabilidad, Sequedad).
+=======
+    Genera un diagrama Skew-T log-P termodinámico estándar con Matplotlib:
+    - Eje Y logarítmico de presión (1000 hPa a 500 hPa).
+    - Isotermas inclinadas a 45°.
+    - Curva de Temperatura (rojo) y Punto de Rocío (verde).
+    - Barbillas de viento en el costado derecho por nivel de presión.
+    - Detección de capas de inversión térmica.
+>>>>>>> incendios-magnitud-meteorologia/master
     """
     df = df_perfil.dropna(subset=["presion_hpa"]).sort_values("presion_hpa", ascending=False).copy()
     
     # Factor de inclinación (Skew factor)
     p0 = 1000.0
+<<<<<<< HEAD
     skew = 32.0
+=======
+    skew = 35.0
+>>>>>>> incendios-magnitud-meteorologia/master
 
     def skew_x(temp_c, p_hpa):
         return temp_c + skew * np.log(p0 / p_hpa)
 
+<<<<<<< HEAD
     fig, ax = plt.subplots(figsize=(9.5, 9.0), dpi=120)
     fig.patch.set_facecolor("#0F172A")
     ax.set_facecolor("#1E293B")
@@ -184,17 +198,82 @@ def generar_skewt_diagram(
             spd_knots = spd_kmh * 0.539957  # nudos
             dir_deg = row["direccion_viento_deg"]
             dir_rad = math.radians(dir_deg)
+=======
+    fig, ax = plt.subplots(figsize=(8.5, 8), dpi=100)
+    fig.patch.set_facecolor("#FFFFFF")
+    ax.set_facecolor("#FAFAFC")
+
+    # Configuración de límites y escala de presión (Y logarítmico invertido)
+    p_min, p_max = 480.0, 1030.0
+    t_min, t_max = -35.0, 45.0
+    
+    x_min = skew_x(t_min, p_max)
+    x_max = skew_x(t_max, p_min)
+
+    # 1. Trazar Isobaras de referencia (Líneas horizontales de presión)
+    isobaras = [1000, 950, 925, 900, 850, 800, 700, 600, 500]
+    for p in isobaras:
+        if p_min <= p <= p_max:
+            ax.axhline(p, color="#D0D5DD", linestyle="-", linewidth=0.8, alpha=0.8)
+
+    # 2. Trazar Isotermas inclinadas de referencia
+    isotermas = np.arange(-50, 60, 10)
+    p_ref = np.linspace(p_min, p_max, 50)
+    for t_iso in isotermas:
+        x_iso = [skew_x(t_iso, p) for p in p_ref]
+        color_iso = "#3B82F6" if t_iso == 0 else "#E2E8F0"
+        lw = 1.5 if t_iso == 0 else 0.8
+        ax.plot(x_iso, p_ref, color=color_iso, linestyle="--", linewidth=lw, alpha=0.85)
+
+    # 3. Trazar Curva de Temperatura (T) y Punto de Rocío (Td)
+    if "temperatura_c" in df.columns and df["temperatura_c"].notna().any():
+        df_t = df.dropna(subset=["temperatura_c", "presion_hpa"])
+        x_t = [skew_x(t, p) for t, p in zip(df_t["temperatura_c"], df_t["presion_hpa"])]
+        ax.plot(x_t, df_t["presion_hpa"], color="#DC2626", linewidth=2.5, label="Temperatura (T)", marker="o", markersize=4)
+
+    if "punto_rocio_c" in df.columns and df["punto_rocio_c"].notna().any():
+        df_td = df.dropna(subset=["punto_rocio_c", "presion_hpa"])
+        x_td = [skew_x(td, p) for td, p in zip(df_td["punto_rocio_c"], df_td["presion_hpa"])]
+        ax.plot(x_td, df_td["presion_hpa"], color="#16A34A", linewidth=2.5, label="Pto. Rocío (Td)", marker="s", markersize=4)
+
+    # 4. Sombreado de inversión térmica (cuando T aumenta con la altura / menor P)
+    if "temperatura_c" in df.columns and len(df.dropna(subset=["temperatura_c"])) >= 2:
+        df_t = df.dropna(subset=["temperatura_c", "presion_hpa"])
+        for i in range(len(df_t) - 1):
+            p_lower = df_t.iloc[i]["presion_hpa"]
+            p_upper = df_t.iloc[i + 1]["presion_hpa"]
+            t_lower = df_t.iloc[i]["temperatura_c"]
+            t_upper = df_t.iloc[i + 1]["temperatura_c"]
+            if t_upper > t_lower:  # Inversión térmica
+                ax.axhspan(p_upper, p_lower, color="#FEF08A", alpha=0.25, label="Inversión Térmica" if i == 0 else "")
+
+    # 5. Barbillas de viento en el margen derecho
+    if "velocidad_viento_kmh" in df.columns and "direccion_viento_deg" in df.columns:
+        df_viento = df.dropna(subset=["velocidad_viento_kmh", "direccion_viento_deg", "presion_hpa"])
+        x_barb_pos = x_max - 5.0
+        
+        for _, row in df_viento.iterrows():
+            p_val = row["presion_hpa"]
+            spd_knots = row["velocidad_viento_kmh"] * 0.539957  # km/h a nudos
+            dir_rad = math.radians(row["direccion_viento_deg"])
+>>>>>>> incendios-magnitud-meteorologia/master
             
             u = -spd_knots * math.sin(dir_rad)
             v = -spd_knots * math.cos(dir_rad)
             
+<<<<<<< HEAD
             # Barbilla de viento
             ax.barbs(
                 x_barb_col,
+=======
+            ax.barbs(
+                x_barb_pos,
+>>>>>>> incendios-magnitud-meteorologia/master
                 p_val,
                 u,
                 v,
                 length=6.0,
+<<<<<<< HEAD
                 barbcolor="#F8FAFC",
                 flagcolor="#EF4444",
                 linewidth=1.2,
@@ -310,6 +389,34 @@ def generar_skewt_diagram(
             fontsize=8.5,
             labelcolor="#F8FAFC",
         )
+=======
+                barbcolor="#1E293B",
+                flagcolor="#DC2626",
+                linewidth=1.0,
+                sizes=dict(emptybarb=0.1, spacing=0.2, height=0.5),
+            )
+
+    # Configuración de ejes
+    ax.set_yscale("log")
+    ax.set_ylim(p_max, p_min)
+    ax.set_yticks(isobaras)
+    ax.get_yaxis().set_major_formatter(ticker.ScalarFormatter())
+    ax.set_ylabel("Presión Atmosférica (hPa)", fontsize=11, fontweight="semibold", color="#334155")
+
+    ticks_temp = np.arange(-30, 45, 10)
+    ticks_x = [skew_x(t, p0) for t in ticks_temp]
+    ax.set_xticks(ticks_x)
+    ax.set_xticklabels([f"{t}°C" for t in ticks_temp], fontsize=9)
+    ax.set_xlabel("Temperatura a 1000 hPa / Isotermas (°C)", fontsize=11, fontweight="semibold", color="#334155")
+    ax.set_xlim(x_min, x_max)
+
+    ax.set_title(f"{titulo}\n{subtitulo}" if subtitulo else titulo, fontsize=12, fontweight="bold", color="#0F172A", pad=12)
+    
+    handles, labels = ax.get_legend_handles_labels()
+    by_label = dict(zip(labels, handles))
+    if by_label:
+        ax.legend(by_label.values(), by_label.keys(), loc="upper left", framealpha=0.9, facecolor="#FFFFFF", edgecolor="#CBD5E1", fontsize=9)
+>>>>>>> incendios-magnitud-meteorologia/master
 
     plt.tight_layout()
     return fig
@@ -320,11 +427,16 @@ def generar_skewt_por_horas(dicc_perfiles: dict[str, pd.DataFrame], fecha: str =
     figuras = {}
     for hora, df_perfil in dicc_perfiles.items():
         sub = f"Fecha: {fecha} | Hora: {hora} Local" if fecha else f"Hora: {hora} Local"
+<<<<<<< HEAD
         figuras[hora] = generar_skewt_diagram(df_perfil, titulo="Perfil Vertical Atmosférico (Skew-T)", subtitulo=sub)
+=======
+        figuras[hora] = generar_skewt_diagram(df_perfil, titulo="Perfil Vertical Atmosférico", subtitulo=sub)
+>>>>>>> incendios-magnitud-meteorologia/master
     return figuras
 
 
 # ==============================================================================
+<<<<<<< HEAD
 # 2. DIAGRAMA SKEW-T INTERACTIVO (PLOTLY)
 # ==============================================================================
 
@@ -704,6 +816,9 @@ def generar_skewt_plotly(
 
 # ==============================================================================
 # 3. SERIES TEMPORALES DE SUPERFICIE (PLOTLY CON FALLBACK MATPLOTLIB)
+=======
+# 2. SERIES TEMPORALES DE SUPERFICIE (PLOTLY CON FALLBACK MATPLOTLIB)
+>>>>>>> incendios-magnitud-meteorologia/master
 # ==============================================================================
 
 def generar_grafico_temperatura_humedad(df_horario: pd.DataFrame):

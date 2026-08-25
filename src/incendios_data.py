@@ -1,10 +1,15 @@
 """
 src/incendios_data.py
+<<<<<<< HEAD
 Carga, filtrado y calculo de centroides de incendios historicos de magnitud.
+=======
+Carga, filtrado y cálculo de centroides de incendios históricos de magnitud.
+>>>>>>> incendios-magnitud-meteorologia/master
 """
 
 from datetime import date, datetime
 from pathlib import Path
+<<<<<<< HEAD
 import re
 import unicodedata
 import geopandas as gpd
@@ -147,6 +152,27 @@ def _normalizar_region(texto: str) -> str:
 
     # Si no encontro, devolver corregido
     return corregido
+=======
+import geopandas as gpd
+import pandas as pd
+
+RUTA_GPKG = Path(__file__).resolve().parent.parent / "data" / "raw" / "incendios" / "poligonos" / "if_magnitud_compilado.gpkg"
+
+
+def _corregir_mojibake(texto: str) -> str:
+    """Corrige caracteres mal codificados como Ã³ -> ó, Ã­ -> í, etc."""
+    if not isinstance(texto, str):
+        return str(texto)
+    reemplazos = {
+        "Ã¡": "á", "Ã©": "é", "Ã­": "í", "Ã³": "ó", "Ãº": "ú",
+        "Ã": "Á", "Ã‰": "É", "Ã": "Í", "Ã“": "Ó", "Ãš": "Ú",
+        "Ã±": "ñ", "Ã‘": "Ñ", "": "Ñ", "Ã¼": "ü", "Ãœ": "Ü",
+    }
+    res = texto
+    for k, v in reemplazos.items():
+        res = res.replace(k, v)
+    return res
+>>>>>>> incendios-magnitud-meteorologia/master
 
 
 def cargar_geopackage_incendios(ruta_gpkg: str | Path = RUTA_GPKG) -> gpd.GeoDataFrame:
@@ -156,6 +182,7 @@ def cargar_geopackage_incendios(ruta_gpkg: str | Path = RUTA_GPKG) -> gpd.GeoDat
     """
     ruta = Path(ruta_gpkg)
     if not ruta.exists():
+<<<<<<< HEAD
         raise FileNotFoundError(f"No se encontro el archivo GeoPackage en: {ruta}")
 
     gdf = gpd.read_file(ruta)
@@ -165,14 +192,29 @@ def cargar_geopackage_incendios(ruta_gpkg: str | Path = RUTA_GPKG) -> gpd.GeoDat
         gdf = gdf.set_crs("EPSG:32719")
 
     # Centroides precisos calculados en CRS proyectado y luego pasados a WGS84
+=======
+        raise FileNotFoundError(f"No se encontró el archivo GeoPackage en: {ruta}")
+
+    gdf = gpd.read_file(ruta)
+
+    # Asegurar reproyección a EPSG:4326 para obtener latitud y longitud geográficas
+    if gdf.crs is None:
+        gdf = gdf.set_crs("EPSG:32719")
+
+    # Centroides en CRS proyectado para cálculo geométrico correcto y luego a 4326
+>>>>>>> incendios-magnitud-meteorologia/master
     centroides_wgs84 = gdf.geometry.centroid.to_crs("EPSG:4326")
     gdf["lon_centroide"] = centroides_wgs84.x
     gdf["lat_centroide"] = centroides_wgs84.y
 
+<<<<<<< HEAD
     # Reproyectar geometrías a EPSG:4326 (WGS84) para visualización web / Folium
     gdf = gdf.to_crs("EPSG:4326")
 
     # Fechas
+=======
+    # Limpieza de fechas
+>>>>>>> incendios-magnitud-meteorologia/master
     if "FECHA_INI" in gdf.columns:
         gdf["FECHA_INI_DT"] = pd.to_datetime(gdf["FECHA_INI"], errors="coerce")
     else:
@@ -183,6 +225,7 @@ def cargar_geopackage_incendios(ruta_gpkg: str | Path = RUTA_GPKG) -> gpd.GeoDat
     else:
         gdf["FECHA_TER_DT"] = pd.NaT
 
+<<<<<<< HEAD
     # Nombres y regiones
     gdf["NOM_INCEN"] = (
         gdf["NOM_INCEN"].fillna("Sin Nombre").astype(str)
@@ -199,6 +242,18 @@ def cargar_geopackage_incendios(ruta_gpkg: str | Path = RUTA_GPKG) -> gpd.GeoDat
         gdf["TEMPORADA"] = gdf["TEMPORADA"].fillna("Desconocida").astype(str).str.strip()
 
     # Superficie
+=======
+    # Limpieza de nombres de incendio y regiones con corrección de codificación
+    gdf["NOM_INCEN"] = gdf["NOM_INCEN"].fillna("Sin Nombre").astype(str).apply(_corregir_mojibake).str.strip()
+    if "REGION" in gdf.columns:
+        gdf["REGION"] = gdf["REGION"].fillna("No informada").astype(str).apply(_corregir_mojibake).str.strip()
+    if "COMUNA" in gdf.columns:
+        gdf["COMUNA"] = gdf["COMUNA"].fillna("No informada").astype(str).apply(_corregir_mojibake).str.strip()
+    if "TEMPORADA" in gdf.columns:
+        gdf["TEMPORADA"] = gdf["TEMPORADA"].fillna("Desconocida").astype(str).str.strip()
+
+    # Superficie en hectáreas
+>>>>>>> incendios-magnitud-meteorologia/master
     if "Superficie_ha" in gdf.columns and gdf["Superficie_ha"].notna().any():
         gdf["superficie_ha_clean"] = pd.to_numeric(gdf["Superficie_ha"], errors="coerce")
     elif "SUPERFICIE" in gdf.columns:
@@ -213,10 +268,15 @@ def obtener_temporadas_disponibles(gdf: gpd.GeoDataFrame) -> list[str]:
     """Retorna la lista ordenada de temporadas disponibles."""
     if "TEMPORADA" not in gdf.columns:
         return []
+<<<<<<< HEAD
     return sorted(
         [t for t in gdf["TEMPORADA"].unique() if t and t != "Desconocida"],
         reverse=True,
     )
+=======
+    temporadas = sorted([t for t in gdf["TEMPORADA"].unique() if t and t != "Desconocida"], reverse=True)
+    return temporadas
+>>>>>>> incendios-magnitud-meteorologia/master
 
 
 def obtener_regiones_disponibles(gdf: gpd.GeoDataFrame) -> list[str]:
@@ -232,7 +292,11 @@ def filtrar_incendios(
     region: str | None = None,
     texto_busqueda: str | None = None,
 ) -> gpd.GeoDataFrame:
+<<<<<<< HEAD
     """Filtra el GeoDataFrame de incendios por temporada, region o texto en nombre."""
+=======
+    """Filtra el GeoDataFrame de incendios por temporada, región o texto en nombre."""
+>>>>>>> incendios-magnitud-meteorologia/master
     df_filtrado = gdf.copy()
     if temporada and temporada != "Todas":
         df_filtrado = df_filtrado[df_filtrado["TEMPORADA"] == temporada]
@@ -240,20 +304,32 @@ def filtrar_incendios(
         df_filtrado = df_filtrado[df_filtrado["REGION"] == region]
     if texto_busqueda:
         patron = texto_busqueda.strip().lower()
+<<<<<<< HEAD
         df_filtrado = df_filtrado[
             df_filtrado["NOM_INCEN"].str.lower().str.contains(patron, na=False)
         ]
+=======
+        df_filtrado = df_filtrado[df_filtrado["NOM_INCEN"].str.lower().str.contains(patron, na=False)]
+>>>>>>> incendios-magnitud-meteorologia/master
     return df_filtrado
 
 
 def extraer_info_incendio(fila: pd.Series) -> dict:
+<<<<<<< HEAD
     """Extrae un diccionario con metadatos utiles para la interfaz y consulta meteorologica."""
+=======
+    """Extrae un diccionario con metadatos útiles para la interfaz y consulta meteorológica."""
+>>>>>>> incendios-magnitud-meteorologia/master
     fecha_ini = fila.get("FECHA_INI_DT")
     fecha_ter = fila.get("FECHA_TER_DT")
 
     fecha_ini_date = fecha_ini.date() if pd.notna(fecha_ini) else None
     fecha_ter_date = fecha_ter.date() if pd.notna(fecha_ter) else None
 
+<<<<<<< HEAD
+=======
+    # Si no hay fecha de término o es anterior a la de inicio, usar ventana de 5 días
+>>>>>>> incendios-magnitud-meteorologia/master
     if fecha_ini_date and (not fecha_ter_date or fecha_ter_date < fecha_ini_date):
         fecha_ter_date = fecha_ini_date + pd.Timedelta(days=5).to_pytimedelta()
 
@@ -265,11 +341,15 @@ def extraer_info_incendio(fila: pd.Series) -> dict:
         "comuna": fila.get("COMUNA", "No informada"),
         "provincia": fila.get("PROVINCIA", "No informada"),
         "causa": fila.get("CAUSA", "No especificada"),
+<<<<<<< HEAD
         "superficie_ha": float(
             fila.get("superficie_ha_clean", 0.0)
             if pd.notna(fila.get("superficie_ha_clean"))
             else 0.0
         ),
+=======
+        "superficie_ha": float(fila.get("superficie_ha_clean", 0.0) if pd.notna(fila.get("superficie_ha_clean")) else 0.0),
+>>>>>>> incendios-magnitud-meteorologia/master
         "latitud": float(fila.get("lat_centroide", 0.0)),
         "longitud": float(fila.get("lon_centroide", 0.0)),
         "fecha_inicio": fecha_ini_date,

@@ -14,8 +14,13 @@ import requests
 
 BASE_URL = "https://archive-api.open-meteo.com/v1/archive"
 
+<<<<<<< HEAD
 # Niveles de presión estándar atmosféricos (hPa)
 NIVELES_PRESION_HPA = [1000, 975, 950, 925, 900, 850, 800, 700, 600, 500, 400, 300, 250, 200]
+=======
+# Niveles de presión estándar en Open-Meteo (hPa)
+NIVELES_PRESION_HPA = [1000, 975, 950, 925, 900, 850, 800, 700, 600, 500]
+>>>>>>> incendios-magnitud-meteorologia/master
 
 VARIABLES_SUPERFICIE = [
     "temperature_2m",
@@ -38,7 +43,11 @@ def calcular_punto_rocio(temperatura_c, humedad_relativa_pct):
     
     if isinstance(temperatura_c, (pd.Series, np.ndarray, list)):
         t = pd.to_numeric(pd.Series(temperatura_c), errors="coerce")
+<<<<<<< HEAD
         hr = pd.to_numeric(pd.Series(humedad_relativa_pct), errors="coerce").clip(lower=0.5, upper=100.0)
+=======
+        hr = pd.to_numeric(pd.Series(humedad_relativa_pct), errors="coerce").clip(lower=1.0, upper=100.0)
+>>>>>>> incendios-magnitud-meteorologia/master
         alpha = ((a * t) / (b + t)) + np.log(hr / 100.0)
         td = (b * alpha) / (a - alpha)
         return td
@@ -46,11 +55,16 @@ def calcular_punto_rocio(temperatura_c, humedad_relativa_pct):
         if temperatura_c is None or humedad_relativa_pct is None or pd.isna(temperatura_c) or pd.isna(humedad_relativa_pct):
             return np.nan
         t = float(temperatura_c)
+<<<<<<< HEAD
         hr = max(0.5, min(100.0, float(humedad_relativa_pct)))
+=======
+        hr = max(1.0, min(100.0, float(humedad_relativa_pct)))
+>>>>>>> incendios-magnitud-meteorologia/master
         alpha = ((a * t) / (b + t)) + math.log(hr / 100.0)
         return (b * alpha) / (a - alpha)
 
 
+<<<<<<< HEAD
 def calcular_indice_haines(t_850: float, t_700: float, td_850: float) -> dict:
     """
     Calcula el Índice de Haines (Mid-Level, 850 - 700 hPa) para potencial de incendios convectivos/eruptivos:
@@ -97,6 +111,8 @@ def calcular_indice_haines(t_850: float, t_700: float, td_850: float) -> dict:
     }
 
 
+=======
+>>>>>>> incendios-magnitud-meteorologia/master
 def _variables_perfil_vertical(niveles: list[int]) -> list[str]:
     variables = []
     for nivel in niveles:
@@ -118,6 +134,7 @@ def consultar_meteorologia_historica(
     timezone: str = "America/Santiago",
 ) -> pd.DataFrame:
     """
+<<<<<<< HEAD
     Devuelve un DataFrame horario con variables meteorológicas de superficie
     y perfil vertical de presión.
     
@@ -127,21 +144,34 @@ def consultar_meteorologia_historica(
        - Para fechas >= 2021: modelo GFS Seamless de alta resolución.
        - Para fechas 2017 a 2020: modelo JMA Seamless (cobertura completa de niveles de presión).
        - Para fechas previas a 2017: modelo ERA5 estándar.
+=======
+    Devuelve un DataFrame horario con variables de superficie y perfil
+    vertical para una coordenada y rango de fechas.
+>>>>>>> incendios-magnitud-meteorologia/master
     """
     fecha_fin = fecha_fin or fecha_inicio
     niveles_presion = niveles_presion or NIVELES_PRESION_HPA
 
+<<<<<<< HEAD
     # 1. Consulta de variables de superficie (Garantizada ERA5)
     params_sup = {
+=======
+    params = {
+>>>>>>> incendios-magnitud-meteorologia/master
         "latitude": round(lat, 4),
         "longitude": round(lon, 4),
         "start_date": fecha_inicio.isoformat(),
         "end_date": fecha_fin.isoformat(),
+<<<<<<< HEAD
         "hourly": ",".join(VARIABLES_SUPERFICIE),
+=======
+        "hourly": ",".join(variables),
+>>>>>>> incendios-magnitud-meteorologia/master
         "timezone": timezone,
         "wind_speed_unit": "kmh",
     }
 
+<<<<<<< HEAD
     try:
         resp_sup = requests.get(BASE_URL, params=params_sup, timeout=40)
         resp_sup.raise_for_status()
@@ -189,11 +219,27 @@ def consultar_meteorologia_historica(
     except Exception:
         pass  # Si falla la consulta en altura, mantenemos la superficie 100% funcional
 
+=======
+    respuesta = requests.get(BASE_URL, params=params, timeout=40)
+    respuesta.raise_for_status()
+    datos = respuesta.json()
+
+    if "hourly" not in datos or not datos["hourly"].get("time"):
+        return pd.DataFrame()
+
+    df = pd.DataFrame(datos["hourly"])
+    df["time"] = pd.to_datetime(df["time"])
+    
+>>>>>>> incendios-magnitud-meteorologia/master
     # Calcular punto de rocío en superficie
     if "temperature_2m" in df.columns and "relative_humidity_2m" in df.columns:
         df["dew_point_2m"] = calcular_punto_rocio(df["temperature_2m"], df["relative_humidity_2m"])
 
+<<<<<<< HEAD
     # Calcular punto de rocío para cada nivel de presión disponible
+=======
+    # Calcular punto de rocío para cada nivel de presión
+>>>>>>> incendios-magnitud-meteorologia/master
     for nivel in niveles_presion:
         t_col = f"temperature_{nivel}hPa"
         rh_col = f"relative_humidity_{nivel}hPa"

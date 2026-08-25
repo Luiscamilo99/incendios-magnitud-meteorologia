@@ -6,6 +6,7 @@ Visualización meteorológica integral de incendios:
 - Diagrama Skew-T log-P de perfil vertical atmosférico.
 """
 
+<<<<<<< HEAD
 import sys
 from pathlib import Path
 from datetime import date, datetime, timedelta
@@ -17,6 +18,10 @@ if str(ROOT_DIR) not in sys.path:
 
 import pandas as pd
 import numpy as np
+=======
+from datetime import date, datetime, timedelta
+import pandas as pd
+>>>>>>> incendios-magnitud-meteorologia/master
 import streamlit as st
 
 from src.incendios_data import (
@@ -37,7 +42,10 @@ from src.graficos import (
     generar_grafico_viento,
     generar_rosa_vientos,
     generar_skewt_diagram,
+<<<<<<< HEAD
     generar_skewt_plotly,
+=======
+>>>>>>> incendios-magnitud-meteorologia/master
 )
 
 
@@ -98,6 +106,7 @@ info_incendio_sel = None
 if modo_consulta == "🔥 Por Incendio Histórico" and gdf_incendios is not None:
     st.sidebar.subheader("Filtrar Incendios")
     
+<<<<<<< HEAD
     # Sincronizar filtros si hay un incendio global en session_state
     temp_def_idx = 0
     reg_def_idx = 0
@@ -113,6 +122,13 @@ if modo_consulta == "🔥 Por Incendio Histórico" and gdf_incendios is not None
     if reg_glob and reg_glob in regiones:
         reg_def_idx = regiones.index(reg_glob)
     region_sel = st.sidebar.selectbox("Región", regiones, index=reg_def_idx)
+=======
+    temporadas = ["Todas"] + obtener_temporadas_disponibles(gdf_incendios)
+    temporada_sel = st.sidebar.selectbox("Temporada", temporadas, index=0)
+
+    regiones = ["Todas"] + obtener_regiones_disponibles(gdf_incendios)
+    region_sel = st.sidebar.selectbox("Región", regiones, index=0)
+>>>>>>> incendios-magnitud-meteorologia/master
 
     busqueda_txt = st.sidebar.text_input("Buscar por nombre", "")
 
@@ -136,6 +152,7 @@ if modo_consulta == "🔥 Por Incendio Histórico" and gdf_incendios is not None
             + ")"
         )
         
+<<<<<<< HEAD
         # Sincronizar índice posicional si hay un incendio activo en session_state
         id_preseleccionado = st.session_state.get("id_incendio_seleccionado", None)
         index_default = 0
@@ -147,6 +164,19 @@ if modo_consulta == "🔥 Por Incendio Histórico" and gdf_incendios is not None
         opciones_incendios = gdf_filtrado["etiqueta"].tolist()
         idx_elegido = st.sidebar.selectbox(
             f"Selecciona un Incendio ({len(opciones_incendios)} disponibles)",
+=======
+        # Verificar si hay uno preseleccionado en session_state
+        id_preseleccionado = st.session_state.get("id_incendio_seleccionado", None)
+        index_default = 0
+        if id_preseleccionado is not None and "ID" in gdf_filtrado.columns:
+            matches = gdf_filtrado.index[gdf_filtrado["ID"] == id_preseleccionado].tolist()
+            if matches:
+                index_default = matches[0]
+
+        opciones_incendios = gdf_filtrado["etiqueta"].tolist()
+        idx_elegido = st.sidebar.selectbox(
+            f"Selecciona un Incendio ({len(gdf_filtrado)} disponibles)",
+>>>>>>> incendios-magnitud-meteorologia/master
             range(len(opciones_incendios)),
             format_func=lambda i: opciones_incendios[i],
             index=min(index_default, len(opciones_incendios) - 1),
@@ -155,6 +185,7 @@ if modo_consulta == "🔥 Por Incendio Histórico" and gdf_incendios is not None
         fila_sel = gdf_filtrado.iloc[idx_elegido]
         info_incendio_sel = extraer_info_incendio(fila_sel)
 
+<<<<<<< HEAD
         # Actualizar session_state
         st.session_state["id_incendio_seleccionado"] = info_incendio_sel["id"]
         st.session_state["nombre_incendio_seleccionado"] = info_incendio_sel["nombre"]
@@ -166,6 +197,8 @@ if modo_consulta == "🔥 Por Incendio Histórico" and gdf_incendios is not None
         st.session_state["fecha_termino_incendio"] = info_incendio_sel["fecha_termino"]
         st.session_state["superficie_incendio"] = info_incendio_sel["superficie_ha"]
 
+=======
+>>>>>>> incendios-magnitud-meteorologia/master
         lat_consulta = info_incendio_sel["latitud"]
         lon_consulta = info_incendio_sel["longitud"]
         nombre_evento = info_incendio_sel["nombre"]
@@ -311,6 +344,7 @@ with tab_superficie:
     mostrar_grafico(fig_precip)
 
 # ------------------------------------------------------------------------------
+<<<<<<< HEAD
 # TAB 2: PERFIL VERTICAL SKEW-T (ESTILO WINDY SOUNDING)
 # ------------------------------------------------------------------------------
 with tab_skewt:
@@ -318,6 +352,15 @@ with tab_skewt:
     st.markdown(
         "Evalúa la **estabilidad atmosférica**, **capas de inversión térmica**, **sequedad en altura** "
         "y el perfil vertical de vientos (desde 1000 hPa hasta 200 hPa) asociados al comportamiento del incendio."
+=======
+# TAB 2: PERFIL VERTICAL SKEW-T
+# ------------------------------------------------------------------------------
+with tab_skewt:
+    st.subheader("Sondeo Atmosférico Vertical (Skew-T log-P)")
+    st.markdown(
+        "Permite evaluar la estabilidad atmosférica, capas de inversión térmica "
+        "y el perfil vertical de vientos (desde 1000 hPa hasta 500 hPa)."
+>>>>>>> incendios-magnitud-meteorologia/master
     )
 
     # Selectores de Día y Hora
@@ -337,6 +380,10 @@ with tab_skewt:
     horas_disponibles = df_dia["hora"].tolist()
 
     with col_sel_hora:
+<<<<<<< HEAD
+=======
+        # Preseleccionar 12:00 o 18:00 si están disponibles
+>>>>>>> incendios-magnitud-meteorologia/master
         idx_hora_default = 0
         for h_cand in ["12:00", "15:00", "18:00", "00:00"]:
             if h_cand in horas_disponibles:
@@ -353,6 +400,7 @@ with tab_skewt:
     fila_hora = df_dia[df_dia["hora"] == hora_sel].iloc[0]
     df_perfil = armar_perfil_vertical(fila_hora)
 
+<<<<<<< HEAD
     # Métricas clave del sondeo para incendios forestales
     t_850_val = fila_hora.get("temperature_850hPa", np.nan)
     t_700_val = fila_hora.get("temperature_700hPa", np.nan)
@@ -416,16 +464,33 @@ with tab_skewt:
         fig_skewt = generar_skewt_diagram(
             df_perfil,
             titulo=f"Perfil Vertical Atmosférico - {nombre_evento}",
+=======
+    # Renderizar el gráfico Skew-T y la tabla al lado
+    col_skewt_plot, col_skewt_table = st.columns([3, 2])
+    
+    with col_skewt_plot:
+        subtitulo = f"{nombre_evento} | {dia_sel} {hora_sel} Local | Coords: ({lat_consulta:.3f}, {lon_consulta:.3f})"
+        fig_skewt = generar_skewt_diagram(
+            df_perfil,
+            titulo=f"Perfil Vertical - {nombre_evento}",
+>>>>>>> incendios-magnitud-meteorologia/master
             subtitulo=subtitulo,
         )
         st.pyplot(fig_skewt, use_container_width=True)
 
+<<<<<<< HEAD
     st.markdown("---")
 
     # Tabla de niveles y resumen bajo el gráfico interactivo
     col_tabla, col_resumen = st.columns([3, 2])
     with col_tabla:
         st.markdown(f"#### 📊 Niveles Atmosféricos ({hora_sel} Local)")
+=======
+    with col_skewt_table:
+        st.markdown(f"#### 📊 Niveles Atmosféricos ({hora_sel} Local)")
+        
+        # Formatear tabla de niveles
+>>>>>>> incendios-magnitud-meteorologia/master
         df_mostrar = df_perfil.copy()
         df_mostrar["presion_hpa"] = df_mostrar["presion_hpa"].astype(int)
         df_mostrar = df_mostrar.rename(
@@ -451,6 +516,7 @@ with tab_skewt:
             ),
             use_container_width=True,
             hide_index=True,
+<<<<<<< HEAD
             height=430,
         )
         st.caption("ℹ️ *Hover sobre los puntos de las curvas para ver T, Td, HR y viento en detalle. Doble clic para restablecer el zoom.*")
@@ -543,6 +609,12 @@ with tab_skewt:
             - **Consecuencia:** Cuando este aire seco entra en contacto con las cumbres o desciende por laderas (vientos tipo Puelche / Raco en Chile), seca la vegetación viva y muerta de forma fulminante, dejando el bosque en condición de ignición inmediata.
             """
         )
+=======
+            height=400,
+        )
+        
+        st.caption("ℹ️ *Barbillas de viento: pluma larga = 10 nudos, pluma corta = 5 nudos, banderola = 50 nudos.*")
+>>>>>>> incendios-magnitud-meteorologia/master
 
 # ------------------------------------------------------------------------------
 # TAB 3: DATOS HORARIOS Y EXPORTACIÓN
