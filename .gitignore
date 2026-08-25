@@ -8,6 +8,7 @@
 *.gpkg
 
 .streamlit/secrets.toml
+secrets.toml
 data/raw/
 __pycache__/
 *.pyc
